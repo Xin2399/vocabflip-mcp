@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>涉外知产英语</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body {
+  min-height: 100vh;
+  font-family: -apple-system,"PingFang SC","Segoe UI",sans-serif;
+  display: flex; flex-direction: column; align-items: center;
+  background: var(--bg-img, linear-gradient(160deg, #fff0f4 0%, #fce8ef 35%, #f0eaff 70%, #e8f4ff 100%));
+  background-size: cover; background-position: center; background-attachment: fixed;
+}
+
+/* ── 顶栏 ── */
+.topbar{width:100%;background:#fff;border-bottom:1px solid rgba(255,255,255,0.15);padding:14px 20px 0;display:flex;flex-direction:column;align-items:center;position:sticky;top:0;z-index:100}
+.topbar-title{font-size:.95rem;font-weight:600;color:#6b5a4e;margin-bottom:10px;letter-spacing:.04em}
+.tabs{display:flex;gap:0;width:100%;max-width:480px}
+.tab{flex:1;padding:9px 0;text-align:center;font-size:.82rem;color:var(--text-hint);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.tab:hover{color:var(--accent)}
+
+/* ── 公共容器 ── */
+.page{display:none;width:100%;max-width:480px;padding:20px 16px 40px;flex-direction:column;align-items:center}
+.page.active{display:flex}
+
+/* ========== TAB 1: 词卡 ========== */
+.progress-wrap{width:100%;margin-bottom:18px}
+.progress-bar-bg{width:100%;height:7px;background:rgba(200,180,220,0.35);border-radius:4px;overflow:hidden}
+.progress-bar-fill{height:100%;background:var(--accent-line);border-radius:4px;transition:width .4s}
+.progress-text{font-size:.72rem;color:var(--text-hint);margin-top:4px;text-align:right}
+
+.card-area{width:100%;perspective:1000px;margin-bottom:20px;cursor:pointer}
+.card{width:100%;min-height:210px;position:relative;transform-style:preserve-3d;transition:transform .5s}
+.card.flipped{transform:rotateY(180deg)}
+.face{position:absolute;width:100%;min-height:210px;border-radius:16px;backface-visibility:hidden;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;padding:28px 20px}
+.face-front{background:#fff;box-shadow:0 3px 16px rgba(0,0,0,.07)}
+.face-back{background:rgba(255,255,255,0.12);box-shadow:0 3px 16px rgba(0,0,0,.07);transform:rotateY(180deg);text-align:center}
+.word-en{font-size:1.9rem;font-weight:700;color:var(--text-main)}
+.phonetic{font-size:1rem;font-weight:500;color:var(--text-hint);margin-top:7px}
+.flip-hint{font-size:.7rem;color:var(--text-hint);margin-top:14px}
+.word-zh{font-size:1.5rem;font-weight:700;color:var(--accent);margin-bottom:9px}
+.ex-text{font-size:.8rem;color:var(--text-sub);line-height:1.65;font-style:italic}
+.ex-text .hl{color:var(--accent);font-weight:600;font-style:normal}
+.badge{position:absolute;top:12px;right:14px;font-size:.68rem;padding:2px 8px;border-radius:99px}
+.badge-learned{background:rgba(100,220,150,0.18);color:var(--correct)}
+.badge-review{background:rgba(255,200,100,0.18);color:var(--wrong)}
+
+.btns{display:flex;gap:10px;width:100%;margin-bottom:16px}
+.btn{flex:1;padding:13px;border:none;border-radius:12px;font-size:.92rem;cursor:pointer;transition:all .2s;font-weight:500}
+.btn-review{background:rgba(200,180,220,0.35);color:var(--text-hint)}.btn-review:hover{background:rgba(255,255,255,0.25)}
+.btn-learned{background:var(--accent-line);color:#fff}.btn-learned:hover{background:var(--accent-hover)}
+
+.card-nav{display:flex;align-items:center;gap:14px}
+.nav-btn{background:none;border:1px solid rgba(255,255,255,0.25);border-radius:8px;padding:7px 16px;color:var(--text-hint);font-size:.82rem;cursor:pointer}
+.nav-btn:hover{background:rgba(255,255,255,0.22)}
+.counter{font-size:.78rem;color:var(--text-hint)}
+
+.done-panel{display:none;width:100%;background:#fff;border-radius:16px;padding:28px 20px;text-align:center;box-shadow:0 3px 16px rgba(0,0,0,.07);margin-top:12px}
+.done-panel h2{color:var(--accent);margin-bottom:8px;font-size:1.1rem}
+.done-panel p{color:var(--text-hint);font-size:.86rem;line-height:1.7}
+
+/* ========== TAB 2: 实战句 ========== */
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;width:100%}
+.filter-btn{padding:5px 13px;border-radius:99px;border:1px solid rgba(255,255,255,0.25);background:#fff;color:var(--text-hint);font-size:.78rem;cursor:pointer;transition:all .18s}
+.filter-btn.on{background:var(--accent-line);color:#fff;border-color:var(--accent)}
+
+.phrase-group{width:100%;margin-bottom:18px}
+.phrase-word-header{display:flex;align-items:baseline;gap:8px;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid rgba(255,255,255,0.15)}
+.phrase-word-en{font-size:1rem;font-weight:700;color:var(--text-main)}
+.phrase-word-zh{font-size:.78rem;color:var(--text-hint)}
+.phrase-word-ph{font-size:.75rem;color:var(--text-hint);font-style:italic}
+
+.phrase-card{background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:8px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.phrase-scene{display:inline-block;font-size:.68rem;background:rgba(255,255,255,0.12);color:var(--text-hint);padding:2px 8px;border-radius:6px;margin-bottom:7px}
+.phrase-sentence{font-size:.9rem;color:var(--text-main);line-height:1.75}
+.phrase-sentence .hl{color:var(--accent);font-weight:600}
+.phrase-source{font-size:.7rem;color:var(--text-hint);margin-top:5px}
+
+.empty-tip{color:var(--text-hint);font-size:.88rem;margin-top:30px;text-align:center}
+
+/* ====== TAB 3 ====== */
+.rd-passage{width:100%;background:#fff;border-radius:14px;padding:18px 16px;margin-bottom:24px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.rd-title{font-size:.95rem;font-weight:700;color:var(--text-main);margin-bottom:3px}
+.rd-source{font-size:.7rem;color:var(--text-hint);margin-bottom:12px}
+.rd-text{font-size:.82rem;color:var(--text-main);line-height:1.9;white-space:pre-wrap;background:rgba(255,255,255,0.08);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-family:'SF Mono','Consolas',monospace}
+.rd-questions{display:flex;flex-direction:column;gap:12px}
+.rd-q{background:transparent;border-radius:10px;padding:13px 14px}
+.rd-ask{font-size:.9rem;font-weight:700;color:var(--text-main);margin-bottom:3px}
+.rd-hint{font-size:.72rem;color:var(--text-hint);margin-bottom:8px}
+.rd-input-row{display:flex;gap:8px}
+.rd-input{flex:1;border:1px solid rgba(255,255,255,0.25);border-radius:8px;padding:8px 11px;font-size:.82rem;background:#fff;color:var(--text-main);outline:none}
+.rd-input:focus{border-color:var(--accent)}
+.rd-input.correct{border-color:var(--correct);background:rgba(100,220,150,0.18)}
+.rd-input.wrong{border-color:var(--wrong);background:rgba(255,80,80,0.08)}
+.rd-submit{padding:8px 14px;background:var(--accent-line);color:#fff;border:none;border-radius:8px;font-size:.82rem;cursor:pointer;white-space:nowrap}
+.rd-submit:hover{background:var(--accent-hover)}
+.rd-feedback{font-size:.76rem;margin-top:5px;min-height:18px}
+.rd-feedback.ok{color:var(--correct)}
+.rd-feedback.ng{color:var(--wrong)}
+.rd-score{font-size:.75rem;color:var(--text-hint);text-align:right;margin-bottom:8px}
+
+/* ====== TAB 4 ====== */
+.qz-bar-wrap{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;width:100%;justify-content:center;align-items:center}
+.qz-cat-btn{padding:5px 14px;border-radius:99px;border:1px solid rgba(255,255,255,0.25);background:#fff;color:var(--text-hint);font-size:.78rem;cursor:pointer;transition:all .18s}
+.qz-cat-btn.on{background:var(--accent-line);color:#fff;border-color:var(--accent)}
+.qz-score-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;width:100%}
+.qz-score-text{font-size:.8rem;color:var(--text-hint)}
+.qz-refresh-btn{padding:6px 14px;background:var(--accent-line);color:#fff;border:none;border-radius:8px;font-size:.78rem;cursor:pointer}
+.qz-refresh-btn:hover{background:var(--accent-hover)}
+.qz-item{width:100%;background:#fff;border-radius:14px;padding:16px 16px 14px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.qz-num{font-size:.7rem;color:var(--text-hint);margin-bottom:4px}
+.qz-tag{display:inline-block;font-size:.67rem;background:rgba(255,255,255,0.12);color:var(--text-hint);padding:2px 8px;border-radius:5px;margin-bottom:8px}
+.qz-q{font-size:.95rem;font-weight:700;color:var(--text-main);margin-bottom:12px;line-height:1.6}
+.qz-opts{display:flex;flex-direction:column;gap:7px}
+.qz-opt{padding:10px 13px;border-radius:9px;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.08);font-size:.82rem;color:var(--text-main);cursor:pointer;transition:all .2s;text-align:left}
+.qz-opt:hover:not([disabled]){background:rgba(200,180,220,0.35);border-color:var(--accent)}
+.qz-opt.chosen-correct{background:rgba(100,220,150,0.18) !important;border-color:var(--correct);color:var(--correct);font-weight:600}
+.qz-opt.chosen-wrong{background:rgba(240,80,80,0.15) !important;border-color:var(--wrong);color:var(--wrong)}
+.qz-opt.reveal-correct{background:rgba(100,220,150,0.18) !important;border-color:var(--correct)}
+.qz-explain{font-size:.76rem;color:var(--text-sub);margin-top:10px;padding:9px 12px;background:transparent;border-radius:8px;line-height:1.65}
+
+/* ====== 背景 & 主题 ====== */
+body {
+  background-color: transparent;
+  background-image: var(--bg-img, none);
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  transition: background .4s;
+}
+/* 毛玻璃基础变量 */
+:root {
+  --glass-bg:     rgba(255,255,255,0.78);
+  --glass-border: rgba(255,200,210,0.60);
+  --glass-shadow: 0 6px 24px rgba(220,140,160,0.12);
+  --text-main:    #3a2a30;
+  --text-sub:     #7a5a62;
+  --text-hint:    #c0a8b0;
+  --accent:       #e8a0b0;
+  --accent-hover: #d07888;
+  --accent-line:  #f0b8c4;
+  --correct:      #88c8a0;
+  --wrong:        #e88888;
+}
+/* dark-mode disabled - gradient bg is always dark */
+body.dark-mode-unused {
+  --glass-bg: rgba(20,15,10,0.52);
+  --glass-border: rgba(255,255,255,0.12);
+  --glass-shadow: 0 4px 24px rgba(0,0,0,0.5);
+  --text-main: #f0ece8;
+  --text-sub: #c8b8a8;
+  --text-hint: var(--text-hint);
+  --bg-base: var(--text-main);
+}
+/* 应用毛玻璃 */
+.topbar, .face-front, .face-back, .phrase-card, .qz-item,
+.rd-passage, .done-panel, .qz-explain, .rd-q {
+  background: var(--glass-bg-card) !important;
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+/* 文字可读性增强 */
+.word-en, .phrase-word-en, .qz-q, .rd-ask, .rd-title {
+  text-shadow: 0 1px 3px rgba(255,255,255,0.6);
+}
+body._dark_unused .word-en, body._dark_unused .phrase-word-en,
+body._dark_unused .qz-q, body._dark_unused .rd-ask {
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+}
+/* 颜色跟随主题 */
+body, .word-en, .phrase-word-en, .qz-q, .rd-ask, .rd-title { color: var(--text-main); }
+.phonetic, .phrase-word-zh, .phrase-word-ph, .qz-num, .rd-source,
+.progress-text, .counter, .phrase-source, .flip-hint { color: var(--text-hint); }
+.word-zh, .qz-score-text { color: var(--accent); }
+.topbar { background: var(--glass-bg-card) !important; }
+.tab { color: var(--text-hint); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.qz-opt { background: rgba(255,255,255,0.12); border-color: var(--glass-border); color: var(--text-main); }
+.qz-opt:hover:not([disabled]) { background: rgba(255,255,255,0.25); border-color: var(--accent); }
+.rd-text { background: rgba(255,255,255,0.1); color: var(--text-main); }
+.rd-q { background: rgba(255,255,255,0.1); }
+.rd-input { background: rgba(255,255,255,0.15); color: var(--text-main); border-color: var(--glass-border); }
+.filter-btn { background: rgba(255,255,255,0.12); border-color: var(--glass-border); color: var(--text-main); }
+.filter-btn.on, .qz-cat-btn.on { background: var(--accent); color: #fff; }
+.qz-cat-btn { background: rgba(255,255,255,0.12); border-color: var(--glass-border); color: var(--text-main); }
+.nav-btn { background: rgba(255,255,255,0.12); border-color: var(--glass-border); color: var(--text-main); }
+.progress-bar-bg { background: rgba(255,255,255,0.2); }
+.ex-text, .phrase-sentence { color: var(--text-sub); }
+
+/* ====== 右下控制浮层 ====== */
+.ctrl-fab {
+  position: fixed; bottom: 24px; right: 20px; z-index: 500;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+}
+.ctrl-toggle {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--accent); color: #fff; border: none;
+  font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,.3);
+  display: flex; align-items: center; justify-content: center;
+}
+.ctrl-panel {
+  display: none; flex-direction: column; gap: 8px; align-items: flex-end;
+  background: var(--glass-bg); backdrop-filter: blur(18px);
+  border: 1px solid var(--glass-border); border-radius: 14px;
+  padding: 14px 14px; box-shadow: var(--glass-shadow);
+}
+.ctrl-panel.open { display: flex; }
+.ctrl-label { font-size: .72rem; color: var(--text-hint); margin-bottom: 2px; }
+.ctrl-file-btn {
+  padding: 7px 14px; border-radius: 8px; border: 1px solid var(--glass-border);
+  background: rgba(255,255,255,0.15); color: var(--text-main); font-size: .8rem;
+  cursor: pointer; white-space: nowrap;
+}
+.ctrl-file-btn:hover { background: rgba(255,255,255,0.28); }
+.ctrl-theme-row { display: flex; gap: 6px; }
+.ctrl-theme-dot {
+  width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent;
+  cursor: pointer; transition: border-color .2s;
+}
+.ctrl-theme-dot.active { border-color: var(--accent); }
+.ctrl-clear-btn {
+  padding: 5px 12px; border-radius: 8px; border: 1px solid var(--glass-border);
+  background: rgba(255,255,255,0.1); color: var(--text-hint); font-size: .76rem; cursor: pointer;
+}
+
+/* ── 导航按钮/计数 ── */
+.nav-btn {
+  background: rgba(255,255,255,0.72) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.88) !important;
+  box-shadow: 0 2px 10px rgba(160,100,180,0.12);
+  font-weight: 600;
+  color: var(--text-main) !important;
+}
+.counter {
+  background: rgba(255,255,255,0.60);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.80);
+  border-radius: 99px;
+  padding: 4px 14px;
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--text-sub) !important;
+}
+/* ── 进度文字 ── */
+.progress-text {
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 99px;
+  padding: 2px 10px;
+  font-size: .76rem;
+  display: inline-block;
+  margin-top: 5px;
+}
+/* ── 实战句：单词标题小横条 ── */
+.phrase-word-header {
+  background: rgba(255,255,255,0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 10px;
+  padding: 8px 12px !important;
+  border: 1px solid rgba(255,255,255,0.85);
+  margin-bottom: 10px !important;
+}
+/* ── 筛选按钮 ── */
+.filter-btn, .qz-cat-btn {
+  background: rgba(255,255,255,0.65) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.88) !important;
+  color: var(--text-sub) !important;
+  font-weight: 500;
+}
+/* ── 翻卡片提示 ── */
+.flip-hint {
+  background: rgba(255,255,255,0.50);
+  border-radius: 99px;
+  padding: 3px 12px;
+  font-size: .72rem;
+}
+/* ── tab 栏字体 ── */
+.tab { font-weight: 500; }
+.tab.active { font-weight: 700; }
+/* ── topbar 毛玻璃 ── */
+.topbar {
+  background: rgba(255,255,255,0.70) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
+/* ── 场景标签 ── */
+.phrase-scene {
+  background: rgba(201,123,191,0.18) !important;
+  color: var(--accent) !important;
+  font-weight: 600;
+}
+/* ── 阅读文章底框 ── */
+.rd-text {
+  background: rgba(255,255,255,0.55) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+/* ── 知识题选项 ── */
+.qz-opt {
+  background: rgba(255,255,255,0.60) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.85) !important;
+  color: var(--text-main) !important;
+  font-weight: 500;
+}
+.qz-opt:hover:not([disabled]) {
+  background: rgba(255,255,255,0.88) !important;
+  border-color: var(--accent) !important;
+}
+/* ── rd input ── */
+.rd-input {
+  background: rgba(255,255,255,0.70) !important;
+  border: 1px solid rgba(255,255,255,0.90) !important;
+  color: var(--text-main) !important;
+}
+/* ── 例句来源 ── */
+.phrase-source { color: var(--text-hint) !important; }
+
+/* ── 导航按钮/计数 ── */
+.nav-btn {
+  background: rgba(255,255,255,0.72) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.88) !important;
+  box-shadow: 0 2px 10px rgba(160,100,180,0.12);
+  font-weight: 600;
+  color: var(--text-main) !important;
+}
+.counter {
+  background: rgba(255,255,255,0.60);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.80);
+  border-radius: 99px;
+  padding: 4px 14px;
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--text-sub) !important;
+}
+/* ── 进度文字 ── */
+.progress-text {
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 99px;
+  padding: 2px 10px;
+  font-size: .76rem;
+  display: inline-block;
+  margin-top: 5px;
+}
+/* ── 实战句：单词标题小横条 ── */
+.phrase-word-header {
+  background: rgba(255,255,255,0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 10px;
+  padding: 8px 12px !important;
+  border: 1px solid rgba(255,255,255,0.85);
+  margin-bottom: 10px !important;
+}
+/* ── 筛选按钮 ── */
+.filter-btn, .qz-cat-btn {
+  background: rgba(255,255,255,0.65) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.88) !important;
+  color: var(--text-sub) !important;
+  font-weight: 500;
+}
+/* ── 翻卡片提示 ── */
+.flip-hint {
+  background: rgba(255,255,255,0.50);
+  border-radius: 99px;
+  padding: 3px 12px;
+  font-size: .72rem;
+}
+/* ── tab 栏字体 ── */
+.tab { font-weight: 500; }
+.tab.active { font-weight: 700; }
+/* ── topbar 毛玻璃 ── */
+.topbar {
+  background: rgba(255,255,255,0.70) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
+/* ── 场景标签 ── */
+.phrase-scene {
+  background: rgba(201,123,191,0.18) !important;
+  color: var(--accent) !important;
+  font-weight: 600;
+}
+/* ── 阅读文章底框 ── */
+.rd-text {
+  background: rgba(255,255,255,0.55) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+/* ── 知识题选项 ── */
+.qz-opt {
+  background: rgba(255,255,255,0.60) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.85) !important;
+  color: var(--text-main) !important;
+  font-weight: 500;
+}
+.qz-opt:hover:not([disabled]) {
+  background: rgba(255,255,255,0.88) !important;
+  border-color: var(--accent) !important;
+}
+/* ── rd input ── */
+.rd-input {
+  background: rgba(255,255,255,0.70) !important;
+  border: 1px solid rgba(255,255,255,0.90) !important;
+  color: var(--text-main) !important;
+}
+/* ── 例句来源 ── */
+.phrase-source { color: var(--text-hint) !important; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title">涉外知产英语</div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('cards')">📋 词卡</div>
+    <div class="tab" onclick="switchTab('phrases')">📄 实战句</div>
+    <div class="tab" onclick="switchTab('reading')">🔍 阅读练习</div>
+    <div class="tab" onclick="switchTab('quiz')">❓ 知识题</div>
+  </div>
+</div>
+
+<!-- ===== TAB 1: 词卡 ===== -->
+<div class="page active" id="page-cards">
+  <div class="progress-wrap">
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="pbar" style="width:0%"></div></div>
+    <div class="progress-text" id="ptext">加载中…</div>
+  </div>
+  <div class="card-area" id="cardArea" onclick="flipCard()">
+    <div class="card" id="card">
+      <div class="face face-front">
+        <div class="word-en" id="wordEn">—</div>
+        <div class="phonetic" id="phonetic"></div>
+        <div class="flip-hint">点击翻面查看释义</div>
+      </div>
+      <div class="face face-back">
+        <span class="badge" id="badge" style="display:none"></span>
+        <div class="word-zh" id="wordZh"></div>
+        <div class="ex-text" id="exText"></div>
+      </div>
+    </div>
+  </div>
+  <div class="btns">
+    <button class="btn btn-review" onclick="mark('review')">↻ 再看看</button>
+    <button class="btn btn-learned" onclick="mark('learned')">✓ 学会了</button>
+  </div>
+  <div class="card-nav">
+    <button class="nav-btn" onclick="prev()">← 上一个</button>
+    <span class="counter" id="counter">0 / 0</span>
+    <button class="nav-btn" onclick="next()">下一个 →</button>
+  </div>
+  <div class="done-panel" id="donePanel">
+    <h2>今天打卡完成 ✓</h2>
+    <p id="doneSummary"></p>
+    <p style="margin-top:10px;color:var(--text-hint);font-size:.78rem">可以继续回看所有卡片</p>
+  </div>
+</div>
+
+<!-- ===== TAB 2: 实战句 ===== -->
+<div class="page" id="page-phrases">
+  <div class="filter-row" id="filterRow"></div>
+  <div id="phraseList"></div>
+</div>
+
+<!-- ===== TAB 3 / 4: 占位 ===== -->
+<div class="page" id="page-reading">
+  <div class="rd-list" id="rdList"></div>
+</div>
+<div class="page" id="page-quiz">
+  <div id="qzBar"></div>
+  <div id="qzScoreRow"></div>
+  <div id="qzList"></div>
+</div>
+
+<script>
+
+// ═══════════════ TAB 4: 知识题 ═══════════════
+let quizLoaded = false, qzCategory = 'all', qzAnswered = 0, qzCorrect = 0;
+
+function setupQuiz(){
+  quizLoaded = true;
+  const bar = document.getElementById('qzBar');
+  const cats  = ['全部','PCT','US','EP','国际通用'];
+  const keys  = ['all','PCT','US','EP','国际通用'];
+  bar.className = 'qz-bar-wrap';
+  bar.innerHTML = cats.map((c,i) =>
+    '<button class="qz-cat-btn'+(i===0?' on':'')+'" onclick="filterQuiz("'+keys[i]+'",this)">'+c+'</button>'
+  ).join('') + '<button class="qz-refresh-btn" onclick="reloadQuiz()">换一组</button>';
+  const scoreRow = document.getElementById('qzScoreRow');
+  scoreRow.className = 'qz-score-row';
+  scoreRow.innerHTML = '<span class="qz-score-text" id="qzScore">答对 0 / 0</span>';
+  loadQuiz('all');
+}
+
+function filterQuiz(cat, btn){
+  document.querySelectorAll('.qz-cat-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  loadQuiz(cat);
+}
+
+function reloadQuiz(){ loadQuiz(qzCategory); }
+
+async function loadQuiz(category){
+  qzCategory = category; qzAnswered = 0; qzCorrect = 0;
+  updateQzScore();
+  const res = await fetch('/api/quiz/questions?category='+category+'&count=8');
+  const questions = await res.json();
+  const list = document.getElementById('qzList');
+  list.innerHTML = questions.map((q,i) => {
+    const opts = q.options.map((o,j) =>
+      `<button class="qz-opt" data-qid="${q.id}" data-idx="${j}" onclick="answerQuiz(this)">${o}</button>`
+    ).join('');
+    return '<div class="qz-item" id="qzi-'+q.id+'">'
+      +'<div class="qz-num">Q'+(i+1)+'</div>'
+      +'<span class="qz-tag">'+q.category+'</span>'
+      +'<div class="qz-q">'+q.question+'</div>'
+      +'<div class="qz-opts" id="opts-'+q.id+'">'+opts+'</div>'
+      +'<div class="qz-explain" id="exp-'+q.id+'" style="display:none"></div>'
+      +'</div>';
+  }).join('');
+}
+
+async function answerQuiz(btn){
+  const qid = btn.dataset.qid;
+  const chosen = parseInt(btn.dataset.idx);
+  const res = await fetch('/api/quiz/check',{method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({question_id:qid,chosen:chosen})});
+  const result = await res.json();
+  const opts = document.querySelectorAll('#opts-'+qid+' .qz-opt');
+  opts.forEach((btn,i)=>{
+    btn.disabled = true;
+    if(i === result.answer) btn.classList.add('reveal-correct');
+  });
+  opts[chosen].classList.add(result.correct ? 'chosen-correct' : 'chosen-wrong');
+  const exp = document.getElementById('exp-'+qid);
+  exp.textContent = result.explanation;
+  exp.style.display = 'block';
+  qzAnswered++; if(result.correct) qzCorrect++;
+  updateQzScore();
+}
+
+function updateQzScore(){
+  const sc = document.getElementById('qzScore');
+  if(sc) sc.textContent = '答对 '+qzCorrect+' / '+qzAnswered;
+}
+
+// ═══════════════ TAB 切换 ═══════════════
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    const names = ['cards','phrases','reading','quiz'];
+    t.classList.toggle('active', names[i] === name);
+  });
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  if (name === 'phrases' && !phrasesLoaded) loadPhrases();
+  if (name === 'reading' && !readingLoaded) loadReading();
+  if (name === 'quiz' && !quizLoaded) setupQuiz();
+}
+
+// ═══════════════ TAB 1: 词卡 ═══════════════
+let words = [], idx = 0, flipped = false;
+
+async function loadCards() {
+  const res = await fetch('/api/words/active');
+  words = await res.json();
+  if (!words.length) return;
+  words.sort((a,b)=>{
+    if (!a.today_status && b.today_status) return -1;
+    if (a.today_status && !b.today_status) return 1;
+    return a.id - b.id;
+  });
+  renderCard(); updateProgress();
+}
+
+function renderCard() {
+  const w = words[idx]; if (!w) return;
+  flipped = false;
+  document.getElementById('card').classList.remove('flipped');
+  document.getElementById('wordEn').textContent = w.word;
+  document.getElementById('phonetic').textContent = w.phonetic || '';
+  document.getElementById('wordZh').textContent = w.meaning;
+  const safe = w.word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const hi = (w.example||'').replace(new RegExp('('+safe+')','gi'),'<span class="hl">$1</span>');
+  document.getElementById('exText').innerHTML = hi;
+  const badge = document.getElementById('badge');
+  if (w.today_status==='learned'){ badge.textContent='已学会'; badge.className='badge badge-learned'; badge.style.display='';}
+  else if (w.today_status==='review'){ badge.textContent='复习中'; badge.className='badge badge-review'; badge.style.display='';}
+  else badge.style.display='none';
+  document.getElementById('counter').textContent = `${idx+1} / ${words.length}`;
+}
+
+function flipCard(){ flipped=!flipped; document.getElementById('card').classList.toggle('flipped',flipped); }
+function next(){ if(idx<words.length-1){idx++;renderCard();} }
+function prev(){ if(idx>0){idx--;renderCard();} }
+
+async function mark(status){
+  const w=words[idx];
+  await fetch('/api/study',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({word_id:w.id,status})});
+  w.today_status=status; renderCard(); updateProgress();
+  setTimeout(()=>{if(idx<words.length-1){idx++;renderCard();}},300);
+}
+
+async function updateProgress(){
+  const p=await(await fetch('/api/progress')).json();
+  const pct=p.total>0?Math.round(p.learned/p.total*100):0;
+  document.getElementById('pbar').style.width=pct+'%';
+  document.getElementById('ptext').textContent=`已学会 ${p.learned} / ${p.total}  · 需复习 ${p.review}  · 未碰 ${p.untouched}`;
+  if(p.total>0&&p.untouched===0){
+    const done=document.getElementById('donePanel'); done.style.display='block';
+    document.getElementById('doneSummary').textContent=`学会了 ${p.learned} 个，标记复习 ${p.review} 个。今天做到了！`;
+  }
+}
+
+window.addEventListener('keydown',e=>{
+  if(document.getElementById('page-cards').classList.contains('active')){
+    if(e.key==='ArrowRight') next();
+    else if(e.key==='ArrowLeft') prev();
+    else if(e.key===' '){ e.preventDefault(); flipCard(); }
+    else if(e.key==='1') mark('review');
+    else if(e.key==='2') mark('learned');
+  }
+});
+
+// ═══════════════ TAB 2: 实战句 ═══════════════
+let phrasesLoaded = false;
+let allPhrases = [], activeFilter = 'all';
+
+async function loadPhrases(){
+  phrasesLoaded = true;
+  const res = await fetch('/api/phrases');
+  allPhrases = await res.json();
+  if(!allPhrases.length){
+    document.getElementById('phraseList').innerHTML='<p class="empty-tip">暂无例句，等老公来加</p>';
+    return;
+  }
+  buildFilters();
+  renderPhrases('all');
+}
+
+function buildFilters(){
+  // 按 word 分组过滤
+  const words = [...new Set(allPhrases.map(p=>p.word))];
+  const row = document.getElementById('filterRow');
+  row.innerHTML = '';
+  const all = document.createElement('button');
+  all.className='filter-btn on'; all.textContent='全部';
+  all.onclick=()=>setFilter('all',all);
+  row.appendChild(all);
+  words.forEach(w=>{
+    const btn = document.createElement('button');
+    btn.className='filter-btn'; btn.textContent=w;
+    btn.onclick=()=>setFilter(w,btn);
+    row.appendChild(btn);
+  });
+}
+
+function setFilter(val, btn){
+  activeFilter = val;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderPhrases(val);
+}
+
+function renderPhrases(filter){
+  const list = document.getElementById('phraseList');
+  // 按 word_id 分组
+  const grouped = {};
+  allPhrases.forEach(p=>{
+    if(filter!=='all' && p.word!==filter) return;
+    if(!grouped[p.word]) grouped[p.word]={meaning:p.meaning, phonetic:p.phonetic||'', items:[]};
+    grouped[p.word].items.push(p);
+  });
+  let html = '';
+  Object.entries(grouped).forEach(([word,{meaning,phonetic,items}])=>{
+    html += `<div class="phrase-group">
+      <div class="phrase-word-header">
+        <span class="phrase-word-en">${word}</span>
+        ${phonetic ? '<span class="phrase-word-ph">'+phonetic+'</span>' : ''}
+        <span class="phrase-word-zh">${meaning}</span>
+      </div>`;
+    items.forEach(p=>{
+      const safe = word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+      const hiSen = p.sentence.replace(new RegExp('('+safe+')','gi'),'<span class="hl">$1</span>');
+      html += `<div class="phrase-card">
+        <span class="phrase-scene">${p.scene}</span>
+        <div class="phrase-sentence">${hiSen}</div>
+        <div class="phrase-source">来源：${p.source}</div>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  list.innerHTML = html || '<p class="empty-tip">没有匹配的例句</p>';
+}
+
+
+// TAB 3
+let readingLoaded = false;
+async function loadReading(){
+  readingLoaded = true;
+  const res = await fetch('/api/readings');
+  const passages = await res.json();
+  const container = document.getElementById('rdList');
+  if(!passages.length){ container.innerHTML='<p class="empty-tip">暂无阅读材料</p>'; return; }
+  container.innerHTML = passages.map(p => {
+    const qs = p.questions.map(q => `
+      <div class="rd-q" id="rdq-${p.id}-${q.id}">
+        <div class="rd-ask">${q.ask}</div>
+        <div class="rd-hint">提示：${q.hint}</div>
+        <div class="rd-input-row">
+          <input class="rd-input" id="inp-${p.id}-${q.id}" placeholder="输入答案…"
+                 onkeydown="if(event.key==='Enter') submitReading(${p.id},'${q.id}')">
+          <button class="rd-submit" onclick="submitReading(${p.id},'${q.id}')">确认</button>
+        </div>
+        <div class="rd-feedback" id="fb-${p.id}-${q.id}"></div>
+      </div>`).join('');
+    return `<div class="rd-passage">
+      <div class="rd-title">${p.title}</div>
+      <div class="rd-source">来源：${p.source}</div>
+      <div class="rd-score" id="sc-${p.id}"></div>
+      <div class="rd-text">${p.text}</div>
+      <div class="rd-questions">${qs}</div>
+    </div>`;
+  }).join('');
+}
+async function submitReading(pid, qid){
+  const inp = document.getElementById('inp-'+pid+'-'+qid);
+  const answer = inp.value.trim();
+  if(!answer) return;
+  const res = await fetch('/api/readings/check',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({passage_id:pid,question_id:qid,answer})});
+  const result = await res.json();
+  const fb = document.getElementById('fb-'+pid+'-'+qid);
+  fb.textContent = result.feedback;
+  fb.className = 'rd-feedback '+(result.correct?'ok':'ng');
+  inp.classList.toggle('correct',result.correct);
+  inp.classList.toggle('wrong',!result.correct);
+  if(result.correct) inp.disabled = true;
+  const allQ = document.querySelectorAll('[id^="rdq-'+pid+'-"]');
+  const doneQ = document.querySelectorAll('[id^="inp-'+pid+'-"].correct');
+  const sc = document.getElementById('sc-'+pid);
+  if(sc) sc.textContent = '答对 '+doneQ.length+' / '+allQ.length;
+}
+// ═══════════════ 初始化 ═══════════════
+loadCards();
+</script>
+
+<!-- 右下角控制面板 -->
+<div class="ctrl-fab">
+  <div class="ctrl-panel" id="ctrlPanel">
+    <div>
+      <div class="ctrl-label">背景图片</div>
+      <input type="file" id="bgInput" accept="image/*" style="display:none" onchange="setBg(this)">
+      <div style="display:flex;gap:6px">
+        <button class="ctrl-file-btn" onclick="document.getElementById('bgInput').click()">选择图片</button>
+        <button class="ctrl-clear-btn" onclick="clearBg()">清除</button>
+      </div>
+    </div>
+    <div>
+      <div class="ctrl-label">主题</div>
+      <div class="ctrl-theme-row">
+        <div class="ctrl-theme-dot active" id="dot-light" style="background:transparent"
+             title="浅色" onclick="setTheme('light')"></div>
+        <div class="ctrl-theme-dot" id="dot-dark" style="background:var(--text-main)"
+             title="深色" onclick="setTheme('dark')"></div>
+        <div class="ctrl-theme-dot" id="dot-bw" style="background:linear-gradient(135deg,#fff 50%,#111 50%)"
+             title="黑白" onclick="setTheme('bw')"></div>
+      </div>
+    </div>
+  </div>
+  <button class="ctrl-toggle" onclick="toggleCtrl()">⚙</button>
+</div>
+
+
+<script>
+function toggleCtrl(){
+  document.getElementById('ctrlPanel').classList.toggle('open');
+}
+function setBg(input){
+  if(!input.files[0]) return;
+  const file = input.files[0];
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const img = new Image();
+    img.onload = function(){
+      const canvas = document.createElement('canvas');
+      const MAX = 1200;
+      let w = img.width, h = img.height;
+      if(w > MAX){ h = Math.round(h * MAX / w); w = MAX; }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+      document.body.style.setProperty('--bg-img', 'url('+dataUrl+'), linear-gradient(140deg,#2d1550 0%,#6b2468 45%,#c03060 80%,#e05040 100%)');
+      try{
+        localStorage.setItem('vocab_bg_data', dataUrl);
+      } catch(err){
+        alert('图片太大存不下，换一张小一点的试试~');
+      }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function clearBg(){
+  document.body.style.removeProperty('--bg-img');
+  localStorage.removeItem('vocab_bg_data');
+}
+function setTheme(t){
+  document.querySelectorAll('.ctrl-theme-dot').forEach(d=>d.classList.remove('active'));
+  document.body.classList.remove('dark-mode','bw-mode');
+  if(t==='dark'){ document.body.classList.add('dark-mode'); document.getElementById('dot-dark').classList.add('active'); }
+  else if(t==='bw'){
+    document.body.classList.add('dark-mode');
+    document.body.style.filter='grayscale(1)';
+    document.getElementById('dot-bw').classList.add('active');
+  } else {
+    document.body.style.filter='';
+    document.getElementById('dot-light').classList.add('active');
+  }
+  localStorage.setItem('vocab_theme', t);
+}
+// 恢复主题与背景
+(function(){
+  const t = localStorage.getItem('vocab_theme');
+  if(t) setTheme(t);
+  const bg = localStorage.getItem('vocab_bg_data');
+  if(bg) document.body.style.setProperty('--bg-img', 'url('+bg+'), linear-gradient(140deg,#2d1550 0%,#6b2468 45%,#c03060 80%,#e05040 100%)');
+})();
+</script>
+
+</body>
+</html>

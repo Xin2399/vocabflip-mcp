@@ -144,6 +144,134 @@ def vocab_get_all_progress() -> str:
     except Exception as e:
         return f"查询失败: {e}"
 
+@mcp.tool()
+def vocab_list_words(batch: int = 1, limit: int = 20, offset: int = 0) -> str:
+    """
+    列出某批次的单词（分页）
+    batch: 批次编号
+    limit: 每页数量（默认20，最大100）
+    offset: 偏移量（默认0）
+    """
+    try:
+        limit = min(limit, 100)
+        with db() as c:
+            total = c.execute("SELECT COUNT(*) FROM words WHERE batch=?",(batch,)).fetchone()[0]
+            rows = c.execute(
+                "SELECT id, word, phonetic, meaning, example FROM words WHERE batch=? ORDER BY id LIMIT ? OFFSET ?",
+                (batch, limit, offset)
+            ).fetchall()
+        if not rows:
+            return f"第{batch}批没有单词。"
+        result = f"=== 第{batch}批单词 ({offset+1}-{offset+len(rows)}/{total}) ===\n"
+        for r in rows:
+            result += f"[{r['id']}] {r['word']}"
+            if r["phonetic"]:
+                result += f"  {r['phonetic']}"
+            result += f"\n    释义: {r['meaning']}\n"
+            if r["example"]:
+                result += f"    例句: {r['example']}\n"
+        result += f"\n（共{total}词，当前显示{len(rows)}词，offset={offset}）"
+        return result
+    except Exception as e:
+        return f"查询失败: {e}"
+
+@mcp.tool()
+def vocab_quiz(batch: int = 1, count: int = 10) -> str:
+    """
+    随机抽取单词进行测试
+    batch: 批次编号
+    count: 抽取数量（默认10，最大50）
+    返回随机单词的ID、单词、音标、释义、例句，供AI出题测试
+    """
+    try:
+        count = min(count, 50)
+        with db() as c:
+            total = c.execute("SELECT COUNT(*) FROM words WHERE batch=?",(batch,)).fetchone()[0]
+            rows = c.execute(
+                "SELECT id, word, phonetic, meaning, example FROM words WHERE batch=? ORDER BY RANDOM() LIMIT ?",
+                (batch, count)
+            ).fetchall()
+        if not rows:
+            return f"第{batch}批没有单词。"
+        result = f"=== 随机测试 第{batch}批 (抽取{len(rows)}/{total}) ===\n"
+        for i, r in enumerate(rows, 1):
+            result += f"\n{i}. [{r['id']}] {r['word']}"
+            if r["phonetic"]:
+                result += f"  {r['phonetic']}"
+            result += f"\n   释义: {r['meaning']}\n"
+            if r["example"]:
+                result += f"   例句: {r['example']}\n"
+        result += "\n（请用这些词出题测试用户，用户答完后用vocab_mark_studied标记结果）"
+        return result
+    except Exception as e:
+        return f"出题失败: {e}"
+
+@mcp.tool()
+def vocab_mark_studied(word_ids_json: str, status: str = "learned") -> str:
+    """
+    标记单词学习状态（测试结束后批量记录）
+    word_ids_json: JSON数组字符串，如 [1,2,3]
+    status: "learned"（已掌握）或 "review"（需复习）
+    """
+    try:
+        word_ids = json.loads(word_ids_json)
+        if not isinstance(word_ids, list) or not word_ids:
+            return "参数错误：word_ids_json 需要非空数组，如 [1,2,3]"
+        today = date.today().isoformat()
+        learned_cnt = 0
+        review_cnt = 0
+        with db() as c:
+            for wid in word_ids:
+                word = c.execute("SELECT word FROM words WHERE id=?",(wid,)).fetchone()
+                if not word:
+                    continue
+                # INSERT OR REPLACE（处理 UNIQUE(word_id, log_date) 约束）
+                c.execute("""
+                    INSERT INTO study_log (word_id, status, log_date)
+                    VALUES (?,?,?)
+                    ON CONFLICT(word_id, log_date) DO UPDATE SET status=excluded.status
+                """, (wid, status, today))
+                if status == "learned":
+                    learned_cnt += 1
+                else:
+                    review_cnt += 1
+        return f"已记录 {len(word_ids)} 个词：✓已掌握 {learned_cnt}，↻需复习 {review_cnt}（日期: {today}）"
+    except Exception as e:
+        return f"标记失败: {e}"
+
+@mcp.tool()
+def vocab_search_word(keyword: str, batch: int = 0) -> str:
+    """
+    搜索单词（模糊匹配）
+    keyword: 搜索关键词（匹配单词或释义）
+    batch: 限定批次（0=所有批次）
+    """
+    try:
+        with db() as c:
+            if batch > 0:
+                rows = c.execute(
+                    "SELECT id, word, phonetic, meaning, example, batch FROM words WHERE (word LIKE ? OR meaning LIKE ?) AND batch=? LIMIT 20",
+                    (f"%{keyword}%", f"%{keyword}%", batch)
+                ).fetchall()
+            else:
+                rows = c.execute(
+                    "SELECT id, word, phonetic, meaning, example, batch FROM words WHERE word LIKE ? OR meaning LIKE ? LIMIT 20",
+                    (f"%{keyword}%", f"%{keyword}%")
+                ).fetchall()
+        if not rows:
+            return f"未找到匹配 '{keyword}' 的单词。"
+        result = f"=== 搜索: '{keyword}' ({len(rows)}条结果) ===\n"
+        for r in rows:
+            result += f"[{r['id']}] {r['word']}"
+            if r["phonetic"]:
+                result += f"  {r['phonetic']}"
+            result += f"  (第{r['batch']}批)\n    释义: {r['meaning']}\n"
+            if r["example"]:
+                result += f"    例句: {r['example']}\n"
+        return result
+    except Exception as e:
+        return f"搜索失败: {e}"
+
 if __name__ == "__main__":
     init_db()
     print(f"DB path: {DB}")

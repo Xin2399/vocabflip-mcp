@@ -4,7 +4,8 @@ import sqlite3, json, os
 from datetime import date
 from mcp.server.fastmcp import FastMCP
 
-mcp = FastMCP("vocab", host="0.0.0.0", port=8771)
+PORT = int(os.environ.get("PORT", 8771))
+mcp = FastMCP("vocab", host="0.0.0.0", port=PORT)
 
 # 数据库路径：优先使用环境变量，默认使用当前目录下的 vocab.db
 DB = os.environ.get("DB_PATH", os.path.join(os.path.dirname(os.path.abspath(__file__)), "vocab.db"))

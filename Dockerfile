@@ -15,9 +15,10 @@ RUN mkdir -p /data
 
 # 环境变量
 ENV DB_PATH=/data/vocab.db
-ENV PORT=8771
 
-# 暴露 MCP SSE 端口
+# Railway 会自动设置 PORT 环境变量，服务会读取它
+
+# 暴露端口
 EXPOSE 8771
 
 # 启动 MCP 服务

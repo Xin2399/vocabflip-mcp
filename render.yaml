@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: vocabflip-mcp
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /sse
+    autoDeploy: true
+    envVars:
+      - key: DB_PATH
+        value: /data/vocab.db
+      - key: PORT
+        value: 8771
